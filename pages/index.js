@@ -1,118 +1,117 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import { useMutation } from "@/hooks/useMutation";
+import { useQueries } from "@/hooks/useQueries";
+import { format, formatDistance, formatRelative } from "date-fns";
+import { useStore } from "@/store";
+import Swal from "sweetalert2";
+import useSWR from "swr";
+import fetcher from "@/utils/fetcher";
+const LayoutComponent = dynamic(() => import("@/layouts"));
+const CardComponent = dynamic(() => import("@/components/card"));
 
 export default function Home() {
+  const { editId } = useStore();
+  const [modal, setModal] = useState();
+  const { mutate } = useMutation();
+  const [postForm, setPostForm] = useState("");
+  const [postData, setPostData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLike = () => {
+    console.log("LIKE");
+  };
+  const handleComment = () => {
+    console.log("Comment");
+    setModal("replies");
+  };
+  const handleSaveEdit = async () => {
+    console.log("Comment");
+    // https://paace-f178cafcae7b.nevacloud.io/api/post/update/2
+    const data = { description: postForm };
+    const res = await mutate({
+      url: `https://paace-f178cafcae7b.nevacloud.io/api/post/update/${editId}`,
+      method: "PATCH",
+      payload: data,
+      auth: Cookies.get("user_token"),
+    });
+    if (res?.success) {
+      Swal.fire({
+        title: "Update Successfully!",
+        icon: "success",
+      });
+      fetchPost();
+    }
+    console.log("Ress=>", res);
+  };
+  const dataPostById = async () => {
+    const response = await fetch(
+      `https://paace-f178cafcae7b.nevacloud.io/api/post/${editId}`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${Cookies.get("user_token")}` },
+      }
+    );
+    const data = await response.json();
+    setPostForm(data?.data.description);
+  };
+  const fetchPost = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        "https://paace-f178cafcae7b.nevacloud.io/api/posts?type=all",
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${Cookies.get("user_token")}` },
+        }
+      );
+      const data = await response.json();
+      setPostData(data?.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("Errr->", error);
+    }
+  };
+  useEffect(() => {
+    if (editId !== 0) {
+      dataPostById();
+    }
+    fetchPost();
+  }, [editId]);
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+    <LayoutComponent
+      metaTitle="Home"
+      metaDescription="ini adalah halaman Home Page"
+      metaKeyword="Home, DialogueTalk"
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+      <div className="grid grid-cols-1 gap-4 mt-4 mb-16">
+        {isLoading && (
+          <div className=" w-full text-center">
+            <span className="loading loading-bars loading-lg "></span>
+          </div>
+        )}
+        {postData.map((post) => (
+          <CardComponent
+            key={post.id}
+            id={post.id}
+            name={post.user.name}
+            date={formatRelative(new Date(post.created_at), new Date())}
+            post={post.description}
+            like={post.likes_count}
+            comment={post.replies_count}
+            handleLike={handleLike}
+            handleComment={handleComment}
+            modal={modal}
+            isOwnPost={post.is_own_post}
+            isLikePost={post.is_like_post}
+            onChange={(e) => setPostForm(e.target.value)}
+            value={postForm}
+            handleSave={handleSaveEdit}
+          />
+        ))}
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </LayoutComponent>
   );
 }

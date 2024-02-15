@@ -20,7 +20,6 @@ export default function Home() {
   const [dataReplies, setDataReplies] = useState([]);
 
   const handleLike = async (idPost, isLike) => {
-    console.log("LIKE", idPost);
     if (isLike) {
       const res = await mutate({
         url: `https://paace-f178cafcae7b.nevacloud.io/api/unlikes/post/${idPost}`,
@@ -42,8 +41,6 @@ export default function Home() {
     }
   };
   const handleComment = async (idPost) => {
-    console.log("Comment", idPost);
-
     const response = await fetch(
       `https://paace-f178cafcae7b.nevacloud.io/api/replies/post/${idPost}`,
       {
@@ -53,30 +50,26 @@ export default function Home() {
     );
     const data = await response.json();
     setDataReplies(data?.data);
-    console.log("rep=>", data);
   };
   const handleSaveReplies = async (idPost) => {
-    console.log("ID POS->", idPost);
-    // const data = { description: postForm };
-    // const res = await mutate({
-    //   url: `https://paace-f178cafcae7b.nevacloud.io/api/replies/post/${idPost}`,
-    //   method: "POST",
-    //   payload: data,
-    //   auth: Cookies.get("user_token"),
-    // });
-    // if (res?.success) {
-    //   Swal.fire({
-    //     title: "Replies Successfully!",
-    //     icon: "success",
-    //   });
-    //   fetchPost();
-    //   handleComment(idPost);
-    // }
-    // setPostForm("");
-    // console.log("Ress=>", res);
+    const data = { description: postForm };
+    const res = await mutate({
+      url: `https://paace-f178cafcae7b.nevacloud.io/api/replies/post/${idPost}`,
+      method: "POST",
+      payload: data,
+      auth: Cookies.get("user_token"),
+    });
+    if (res?.success) {
+      Swal.fire({
+        title: "Replies Successfully!",
+        icon: "success",
+      });
+      fetchPost();
+      handleComment(idPost);
+    }
+    setPostForm("");
   };
   const handleSaveEdit = async () => {
-    console.log("Comment");
     const data = { description: postForm };
     const res = await mutate({
       url: `https://paace-f178cafcae7b.nevacloud.io/api/post/update/${editId}`,
@@ -92,7 +85,6 @@ export default function Home() {
       fetchPost();
     }
     setPostForm("");
-    console.log("Ress=>", res);
   };
   const dataPostById = async () => {
     const response = await fetch(
@@ -123,7 +115,6 @@ export default function Home() {
     }
   };
   const handleDeletePost = async (id) => {
-    console.log("DELETE");
     Swal.fire({
       text: "Are you sure you want to Delete this Post?",
       icon: "warning",

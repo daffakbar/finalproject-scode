@@ -30,18 +30,18 @@ const Register = () => {
       phone,
       dob: format(dob, "yyyy-MM-dd"),
     };
-    // console.log("DATA=>", formLogin);
+
     const res = await mutate({
       url: "https://paace-f178cafcae7b.nevacloud.io/api/register",
       payload: formLogin,
     });
-    console.log("ISLOADING", isLoading);
+
     if (res?.success) {
       Swal.fire({
         icon: "success",
         title: "Registration successful!",
       });
-      console.log("ISLOADING", isLoading);
+
       router.push("/login");
     } else {
       Swal.fire({
@@ -49,7 +49,6 @@ const Register = () => {
         title: "Please fill in all the fields to register.",
       });
     }
-    console.log("ISLOADING", isLoading);
   };
 
   return (

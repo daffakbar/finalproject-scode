@@ -36,7 +36,6 @@ export default function Profile({ user }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         const cookies = Cookies.get();
-        console.log("User_toke=>", cookies);
         try {
           await fetch("https://paace-f178cafcae7b.nevacloud.io/api/logout", {
             headers: {
@@ -87,7 +86,6 @@ export default function Profile({ user }) {
       });
       fetchPost();
     }
-    console.log("Ress=>", res);
   };
   const handleDeletePost = async (id) => {
     console.log("DELETE");
@@ -159,7 +157,6 @@ export default function Profile({ user }) {
     0
   );
 
-  console.log("LIKE", totalLikes);
   return (
     <LayoutComponent
       metaTitle="Profile"

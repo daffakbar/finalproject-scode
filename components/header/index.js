@@ -14,7 +14,7 @@ const Header = () => {
       }
     );
     const data = await response.json();
-    console.log("NOTIF", data.data);
+
     setAllNotif(data?.data);
   };
   return (

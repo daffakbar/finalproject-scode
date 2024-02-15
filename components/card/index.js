@@ -31,7 +31,7 @@ const Card = ({
     setModal("Replies");
     handleComment();
   };
-  // console.log("dataReplies", dataReplies);
+
   return (
     <>
       <div className=" shadow-md border  mx-4 rounded-xl p-3" key={key}>

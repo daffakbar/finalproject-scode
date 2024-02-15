@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Form from "../form";
+import { formatRelative } from "date-fns";
 import { useStore } from "@/store";
 const Card = ({
   id,
@@ -11,16 +12,26 @@ const Card = ({
   handleLike,
   handleComment,
   you = false,
-  value,
-  handleSave,
+  valueEdit,
+  handleSaveEdit,
   key,
   isOwnPost,
   isLikePost,
-  onChange,
+  onChangeEdit,
+  handleDeletePost,
+  modalBy,
+  dataReplies,
+  valueReplies,
+  handleSaveReplies,
+  onChangeReplies,
 }) => {
   const [modal, setModal] = useState("");
   const { handleGetEditId } = useStore();
-
+  const handleRep = () => {
+    setModal("Replies");
+    handleComment();
+  };
+  // console.log("dataReplies", dataReplies);
   return (
     <>
       <div className=" shadow-md border  mx-4 rounded-xl p-3" key={key}>
@@ -69,7 +80,7 @@ const Card = ({
                 >
                   <li>
                     <label
-                      htmlFor="my_modal_8"
+                      htmlFor={modalBy}
                       onClick={() => {
                         setModal("Edit");
                         handleGetEditId(id);
@@ -91,7 +102,7 @@ const Card = ({
                       </svg>
                     </label>
                   </li>
-                  <li>
+                  <li onClick={() => handleDeletePost(id)}>
                     <a>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -118,26 +129,39 @@ const Card = ({
             onClick={handleLike}
           >
             <span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                className="bi bi-heart"
-                viewBox="0 0 16 16"
-              >
-                <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15" />
-              </svg>
+              {isLikePost ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  className="bi bi-heart-fill"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  className="bi bi-heart"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15" />
+                </svg>
+              )}
             </span>
             {like} Like
           </button>
           <label
-            htmlFor="my_modal_8"
+            htmlFor={modalBy}
             className="hover:bg-slate-200 w-full rounded-md flex justify-center items-center gap-2 py-1"
-            onClick={() => {
-              handleComment;
-              setModal("Replies");
-            }}
+            onClick={handleRep}
           >
             <span>
               <svg
@@ -157,48 +181,65 @@ const Card = ({
       </div>
       {/* MODAL */}
 
-      <input type="checkbox" id="my_modal_8" className="modal-toggle" />
+      <input type="checkbox" id={modalBy} className="modal-toggle" />
       <div className="modal" role="dialog">
         <div className="modal-box">
           <h3 className="text-lg font-bold">{modal} Post</h3>
-          <Form value={value} handleSave={handleSave} onChange={onChange} />
+
+          {modal === "Replies" ? (
+            <Form
+              value={valueReplies}
+              handleSave={handleSaveReplies}
+              onChange={onChangeReplies}
+            />
+          ) : (
+            <Form
+              value={valueEdit}
+              handleSave={handleSaveEdit}
+              onChange={onChangeEdit}
+            />
+          )}
           {modal === "Replies" && (
             <>
               <hr className=" border my-2" />
-              <div>
-                <div className=" flex justify-between items-center">
-                  <div
-                    className="flex justify-start items-center
-           gap-2 "
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="35"
-                      height="35"
-                      fill="currentColor"
-                      className="bi bi-person-circle"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
-                      <path
-                        fillRule="evenodd"
-                        d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"
-                      />
-                    </svg>
-                    <div>
-                      <p className=" font-semibold">{you ? "Anda" : name}</p>
-                      <p className=" -mt-0.5 text-xs text-slate-400">{date}</p>
+              {dataReplies?.map((datarep) => (
+                <div className=" my-2" key={datarep.id}>
+                  <div className=" flex justify-between items-center">
+                    <div className="flex justify-start items-centergap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="35"
+                        height="35"
+                        fill="currentColor"
+                        className="bi bi-person-circle"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                        <path
+                          fillRule="evenodd"
+                          d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"
+                        />
+                      </svg>
+                      <div className="ml-2">
+                        <p className=" font-semibold">{datarep?.user?.name}</p>
+                        <p className=" -mt-0.5 text-xs text-slate-400">
+                          {formatRelative(
+                            new Date(datarep.created_at),
+                            new Date()
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
+                  <div className=" mt-1">
+                    <p>{datarep.description}</p>
+                  </div>
                 </div>
-                <div className=" mt-1">
-                  <p>Here are a few more libraries</p>
-                </div>
-              </div>
+              ))}
             </>
           )}
         </div>
-        <label className="modal-backdrop" htmlFor="my_modal_8">
+        <label className="modal-backdrop" htmlFor={modalBy}>
           Close
         </label>
       </div>

@@ -1,6 +1,6 @@
 import React from "react";
 
-const NotifCard = ({ name, comment = "", like = "" }) => {
+const NotifCard = ({ name, remark, date }) => {
   return (
     <div className=" flex justify-between items-center">
       <div
@@ -22,19 +22,15 @@ const NotifCard = ({ name, comment = "", like = "" }) => {
           />
         </svg>
         <div>
-          <p className=" font-semibold">{name}</p>
-          {like.length > 0 && (
-            <p className=" -mt-0.5 text-xs text-slate-400">Like Your Post</p>
-          )}
-          {comment.length > 0 && (
-            <p className=" -mt-0.5 text-xs text-slate-400">
-              Comment: <span>{comment}</span>
-            </p>
-          )}
+          <p className=" font-semibold ">{name}</p>
+          {/* {remark === "reply" && ( */}
+          <p className=" -mt-0.5 text-xs text-slate-400">
+            {remark === "like"
+              ? "Like Your Post "
+              : "Your post has a new reply. "}
+            <br /> at {date}
+          </p>
         </div>
-      </div>
-      <div>
-        <button className=" btn btn-primary">Follow</button>
       </div>
     </div>
   );

@@ -2,22 +2,29 @@ import dynamic from "next/dynamic";
 import Swal from "sweetalert2";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
+import { formatRelative } from "date-fns";
+import { useEffect, useState } from "react";
+import { useStore } from "@/store";
+import { useMutation } from "@/hooks/useMutation";
 
 const LayoutComponent = dynamic(() => import("@/layouts"));
 const CardComponent = dynamic(() => import("@/components/card"));
 
 export default function Profile({ user }) {
+  const [postForm, setPostForm] = useState("");
+  const [postData, setPostData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { editId } = useStore();
   const router = useRouter();
+  const { mutate } = useMutation();
   const { data } = user;
 
   const handleLike = () => {
     console.log("LIKE");
   };
-
   const handleComment = () => {
     console.log("Comment");
   };
-
   const handleLogout = () => {
     Swal.fire({
       text: "Are you sure you want to log out?",
@@ -54,14 +61,112 @@ export default function Profile({ user }) {
       }
     });
   };
+  const dataPostById = async () => {
+    const response = await fetch(
+      `https://paace-f178cafcae7b.nevacloud.io/api/post/${editId}`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${Cookies.get("user_token")}` },
+      }
+    );
+    const data = await response.json();
+    setPostForm(data?.data.description);
+  };
+  const handleSaveEdit = async () => {
+    const data = { description: postForm };
+    const res = await mutate({
+      url: `https://paace-f178cafcae7b.nevacloud.io/api/post/update/${editId}`,
+      method: "PATCH",
+      payload: data,
+      auth: Cookies.get("user_token"),
+    });
+    if (res?.success) {
+      Swal.fire({
+        title: "Update Successfully!",
+        icon: "success",
+      });
+      fetchPost();
+    }
+    console.log("Ress=>", res);
+  };
+  const handleDeletePost = async (id) => {
+    console.log("DELETE");
+    Swal.fire({
+      text: "Are you sure you want to Delete this Post?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await fetch(
+            `https://paace-f178cafcae7b.nevacloud.io/api/post/delete/${id}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${Cookies.get("user_token")}`,
+              },
+            }
+          );
+          Swal.fire({
+            title: "Post deleted!",
+            text: "You have been successfully deleted post.",
+            icon: "success",
+          });
+        } catch (error) {
+          console.log("Err=>", error);
+          Swal.fire({
+            title: "Logged Out!",
+            text: "Logged out failure.",
+            icon: "warning",
+          });
+        }
+        fetchPost();
+      }
+    });
+  };
+  const fetchPost = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        "https://paace-f178cafcae7b.nevacloud.io/api/posts?type=me",
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${Cookies.get("user_token")}` },
+        }
+      );
+      const data = await response.json();
+      setPostData(data?.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("Errr->", error);
+    }
+  };
+  useEffect(() => {
+    if (editId !== 0) {
+      dataPostById();
+    }
+    fetchPost();
+  }, [editId]);
+  const totalLikes = postData.reduce(
+    (total, item) => total + item.likes_count,
+    0
+  );
+  const totalReplies = postData.reduce(
+    (total, item) => total + item.replies_count,
+    0
+  );
 
+  console.log("LIKE", totalLikes);
   return (
     <LayoutComponent
       metaTitle="Profile"
       metaDescription="ini adalah halaman Profile Page"
       metaKeyword="Profile, DialogueTalk"
     >
-      <div className="mt-2 py-4 bg-slate-50">
+      <div className="mt-2 py-4 ">
         <div className=" flex gap-4 justify-around items-center  py-4">
           <div>
             <svg
@@ -83,16 +188,16 @@ export default function Profile({ user }) {
           </div>
           <div className=" flex gap-4 text-center">
             <div>
-              <h1 className=" font-bold">50</h1>
+              <h1 className=" font-bold">{postData.length}</h1>
               <h1 className=" -mt-1">Post</h1>
             </div>
             <div>
-              <h1 className=" font-bold">50</h1>
+              <h1 className=" font-bold">{totalLikes}</h1>
               <h1 className=" -mt-1">Like</h1>
             </div>
             <div>
-              <h1 className=" font-bold">50</h1>
-              <h1 className=" -mt-1">Follower</h1>
+              <h1 className=" font-bold">{totalReplies}</h1>
+              <h1 className=" -mt-1">Replies</h1>
             </div>
           </div>
         </div>
@@ -105,23 +210,32 @@ export default function Profile({ user }) {
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4">
-        <CardComponent
-          name={"Johny"}
-          date={"Thu Feb 08 2024"}
-          post={
-            "ertainly! Here are a few more libraries you might consider for creating avatars and frontend components in Reac"
-          }
-          like={2}
-          comment={4}
-          handleLike={handleLike}
-          handleComment={handleComment}
-          you={true}
-        />
-
-        <div className=" w-full text-center">
-          <span className="loading loading-bars loading-lg "></span>
-        </div>
+      <div className="grid grid-cols-1 gap-4 mt-2">
+        {postData.map((post) => (
+          <CardComponent
+            key={post.id}
+            id={post.id}
+            name={post.user.name}
+            date={formatRelative(new Date(post.created_at), new Date())}
+            post={post.description}
+            like={post.likes_count}
+            comment={post.replies_count}
+            handleLike={handleLike}
+            handleComment={handleComment}
+            modalBy={"profile"}
+            isOwnPost={post.is_own_post}
+            isLikePost={post.is_like_post}
+            onChange={(e) => setPostForm(e.target.value)}
+            value={postForm}
+            handleSave={handleSaveEdit}
+            handleDeletePost={handleDeletePost}
+          />
+        ))}
+        {isLoading && (
+          <div className=" w-full text-center">
+            <span className="loading loading-bars loading-lg "></span>
+          </div>
+        )}
       </div>
     </LayoutComponent>
   );
@@ -136,6 +250,5 @@ export async function getServerSideProps(context) {
   );
   const user = await response.json();
   // Pass data to the page via props
-  console.log("user=>", user);
   return { props: { user } };
 }

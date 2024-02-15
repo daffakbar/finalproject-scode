@@ -1,7 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import NotifCard from "../notifCard";
+import Cookies from "js-cookie";
+import { formatRelative } from "date-fns";
 
 const Header = () => {
+  const [allNotif, setAllNotif] = useState([]);
+  const handleNotification = async () => {
+    const response = await fetch(
+      "https://paace-f178cafcae7b.nevacloud.io/api/notifications",
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${Cookies.get("user_token")}` },
+      }
+    );
+    const data = await response.json();
+    console.log("NOTIF", data.data);
+    setAllNotif(data?.data);
+  };
   return (
     <>
       <div className="navbar bg-base-100 shadow-md">
@@ -33,14 +48,26 @@ const Header = () => {
           </label>
         </div>
       </div>
-      <input type="checkbox" id="my_modal_7" className="modal-toggle" />
+      <input
+        type="checkbox"
+        id="my_modal_7"
+        className="modal-toggle"
+        onClick={handleNotification}
+      />
       {/* MODAL */}
       <div className="modal" role="dialog">
         <div className="modal-box">
           <h3 className="text-lg font-bold mb-4">Notification</h3>
           <div className=" grid grid-cols-1 gap-4">
             {/* Notif Card */}
-            <NotifCard name={"Budi"} like={"Haloo"} />
+            {allNotif.map((notif) => (
+              <NotifCard
+                name={notif.user.name}
+                remark={notif.remark}
+                post={notif.posts.description}
+                date={formatRelative(new Date(notif.created_at), new Date())}
+              />
+            ))}
           </div>
         </div>
         <label className="modal-backdrop" htmlFor="my_modal_7">

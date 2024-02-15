@@ -22,16 +22,16 @@ const Post = () => {
 
       if (res?.data) {
         Swal.fire({
-          title: "Post Successful",
+          title: "Posts Successful",
           icon: "success",
         });
-        router.push("/");
       } else {
         Swal.fire({
           title: "Post Failure",
           icon: "warning",
         });
       }
+      router.push("/");
     } catch (error) {
       console.log("err=>", error);
       Swal.fire({
